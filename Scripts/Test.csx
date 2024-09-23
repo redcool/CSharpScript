@@ -6,10 +6,10 @@ class Foo
 {
     public class AComp : MonoBehaviour
     {
-        //public void OnGUI()
-        //{
-        //    GUILayout.Box("test ok");
-        //}
+        public void OnGUI()
+        {
+            GUILayout.Button("onGUI .............",null);
+        }
 
         public void Update()
         {

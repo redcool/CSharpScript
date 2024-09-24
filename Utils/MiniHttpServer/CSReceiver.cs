@@ -1,5 +1,5 @@
 
-//#if MINI_HTTP_SERVER
+#if MINI_HTTP_SERVER
 using PowerUtilities.Net;
 using System;
 using System.Collections;
@@ -31,4 +31,4 @@ namespace CSharpScript
         }
     }
 }
-//#endif
+#endif

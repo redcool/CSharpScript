@@ -11,16 +11,17 @@ namespace CSharpScript
     public static class CScriptUtils
     {
 
-        public static void RunScript(string codeStr)
+        public static void RunScript(CScript runner, string codeStr)
         {
             if (string.IsNullOrEmpty(codeStr))
                 return;
 
-            var run = CScript.CreateRunner();
+            var run = runner ?? CScript.CreateRunner();
             run.LoadScript(codeStr);
             run.RunMain(run);
 
         }
+
 
     }
 }

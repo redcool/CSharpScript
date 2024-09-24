@@ -1,30 +1,30 @@
 namespace CSharpScript
 {
-    using PowerUtilities;
     using Slowsharp;
     using System.Collections;
     using System.Collections.Generic;
     using System.IO;
     using UnityEngine;
 
+    //[ExecuteAlways]
     public class CScriptRunTest : MonoBehaviour
     {
-        public string codeAbsPath;
+        [Multiline(20)]
+        public string codeStr;
 
-        [EditorButton(onClickCall = "RunMain")]
-        public bool isTest;
-
-        HybInstance inst;
-        public void RunMain()
+        public void Run()
         {
-            var codeStr = File.ReadAllText(codeAbsPath);
+            if (string.IsNullOrEmpty(codeStr))
+                return;
 
-            var run = CScript.CreateRunner();
-            run.LoadScript(codeStr);
+            CScriptComponent.Run(gameObject, codeStr);
 
-            inst = run.RunMain(run);
-            Debug.Log(inst);
+            CScriptComponent.RunMain();
         }
 
+        private void OnEnable()
+        {
+            Run();
+        }
     }
 }

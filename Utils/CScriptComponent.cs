@@ -1,7 +1,5 @@
 namespace CSharpScript
 {
-
-    using PowerUtilities;
     using Slowsharp;
     using System.Collections;
     using System.Collections.Generic;
@@ -9,6 +7,43 @@ namespace CSharpScript
     using System.Linq;
     using UnityEngine;
     using System.Text;
+#if UNITY_EDITOR
+    using UnityEditor;
+#endif
+
+#if UNITY_EDITOR
+    [CustomEditor(typeof(CScriptComponent))]
+    public class CScriptComponentEditor : Editor
+    {
+        TextAsset codeAsset;
+        public override void OnInspectorGUI()
+        {
+            base.OnInspectorGUI();
+
+            var inst = (CScriptComponent)target;
+
+            EditorGUILayout.PrefixLabel("Code TextAsset","BoldLabel");
+            codeAsset = (TextAsset)EditorGUILayout.ObjectField(codeAsset, typeof(TextAsset), false);
+            if (codeAsset && GUILayout.Button("Gen Invoke Codes"))
+                GenInvokeCode(codeAsset.text);
+        }
+
+        public void GenInvokeCode(string codeTemplate)
+        {
+            var lines = codeTemplate.Split('\n');
+            var sb = new StringBuilder("// Generated Code\n");
+
+            foreach (var line in lines)
+            {
+                var name = line.Trim();
+                sb.AppendLine($"    void {name}(){{ InvokeMonoMethod(nameof({name}));}}");
+            }
+
+            Debug.Log(sb);
+        }
+    }
+#endif
+
 
     /// <summary>
     /// Call csharpScript's MonoBehaviour
@@ -21,20 +56,9 @@ namespace CSharpScript
         /// </summary>
         Dictionary<string, HybInstance> methodMonoInstDict = new Dictionary<string, HybInstance>();
 
-        CScript runner;
+        static CScript runner;
 
-        [Header("Debug")]
-        public string codeAbsPath;
-
-        [EditorButton(onClickCall = "OnRun")]
-        public bool isRun;
-        [Tooltip("Generate invoke code,copy code from Console")]
-        public string unityEventNames = "Awake,Start,Update,LateUpdate,OnGUI,OnEnable,OnDisable,OnDestroy";
-
-        [EditorButton(onClickCall = "OnCreateInvoke")]
-        public bool isCreateInvoke;
-
-        public CScript Runner
+        public static CScript Runner
         {
             get
             {
@@ -42,12 +66,7 @@ namespace CSharpScript
                     runner = CScript.CreateRunner();
                 return runner;
             }
-        }
-
-        void OnRun()
-        {
-            var codeStr = File.ReadAllText(codeAbsPath);
-            Run(codeStr);
+            set { runner = value; }
         }
 
         public void Run(string codeStr)
@@ -60,17 +79,23 @@ namespace CSharpScript
         /// Run all subclass of MonoBehaviour
         /// </summary>
         /// <param name="runner"></param>
-        public void Run(CScript runner)
+        /// <returns>subClass of MonoBehaviour</returns>
+        public int Run(CScript runner)
         {
-            this.runner = runner;
+            Runner = runner;
+
             if (runner == null)
-                return;
+                return 0;
+            monoInstList.Clear();
+
             var types = Runner.GetTypes().Where(t => t.IsSubclassOf(typeof(MonoBehaviour)));
+
             foreach (var type in types)
             {
                 var monoInst = Runner.Override(type.FullName, gameObject);
                 monoInstList.Add(monoInst);
             }
+            return monoInstList.Count;
         }
 
         /// <summary>
@@ -83,27 +108,28 @@ namespace CSharpScript
             go.AddComponent<CScriptComponent>().Run(runner);
         }
 
-#if UNITY_EDITOR
-        void OnCreateInvoke()
+        public static void Run(GameObject go, string codeStr)
         {
-            var sb = new StringBuilder("// Generated Code");
-            var names = unityEventNames.SplitBy();
-
-            foreach (var name in names)
-            {
-                sb.AppendLine($"    void {name}(){{ InvokeMonoMethod(nameof({name}));}}");
-            }
-
-            Debug.Log(sb);
+            go.AddComponent<CScriptComponent>().Run(codeStr);
         }
-#endif
+
+        /// <summary>
+        /// Runner call script 's Main
+        /// </summary>
+        public static void RunMain()
+        {
+            Runner.RunMain();
+        }
 
         public void InvokeMonoMethod(string methodName)
         {
             foreach (var monoInst in monoInstList)
             {
                 // save method 
-                var inst = DictionaryTools.Get(methodMonoInstDict, methodName, (k) => monoInst.GetMethods(k).Length > 0 ? monoInst : null);
+                if (!methodMonoInstDict.TryGetValue(methodName, out var inst))
+                {
+                    inst = methodMonoInstDict[methodName] = monoInst.GetMethods(methodName).Length > 0 ? monoInst : null;
+                }
                 // invoke
                 inst?.Invoke(methodName);
             }

@@ -1,0 +1,8 @@
+Awake
+Start
+Update
+LateUpdate
+OnGUI
+OnEnable
+OnDisable
+OnDestroy

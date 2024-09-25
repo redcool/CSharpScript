@@ -1,0 +1,6 @@
+<linker>
+    <assembly fullname="UnityEngine.IMGUIModule">
+        <namespace fullname="UnityEngine" />
+    </assembly>
+
+</linker>

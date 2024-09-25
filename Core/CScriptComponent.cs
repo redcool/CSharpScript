@@ -9,6 +9,7 @@ namespace CSharpScript
     using System.Text;
 #if UNITY_EDITOR
     using UnityEditor;
+    using Microsoft.CodeAnalysis.Scripting;
 #endif
 
 #if UNITY_EDITOR
@@ -24,8 +25,10 @@ namespace CSharpScript
 
             EditorGUILayout.PrefixLabel("Code TextAsset","BoldLabel");
             codeAsset = (TextAsset)EditorGUILayout.ObjectField(codeAsset, typeof(TextAsset), false);
-            if (codeAsset && GUILayout.Button("Gen Invoke Codes"))
+            if (GUILayout.Button("Gen Invoke Codes") && codeAsset)
+            {
                 GenInvokeCode(codeAsset.text);
+            }
         }
 
         public void GenInvokeCode(string codeTemplate)
@@ -56,23 +59,25 @@ namespace CSharpScript
         /// </summary>
         Dictionary<string, HybInstance> methodMonoInstDict = new Dictionary<string, HybInstance>();
 
-        static CScript runner;
-
-        public static CScript Runner
+        CScript runner;
+        /// <summary>
+        /// create a new CScript(runner), and run code
+        /// </summary>
+        /// <param name="codeStr"></param>
+        /// <returns></returns>
+        public CScript Run(string codeStr)
         {
-            get
+            if(runner == null)
+                runner = CScript.CreateRunner();
+            else
             {
-                if (runner == null)
-                    runner = CScript.CreateRunner();
-                return runner;
+                runner.UpdateMethodsOnly(codeStr);
             }
-            set { runner = value; }
-        }
 
-        public void Run(string codeStr)
-        {
-            Runner.LoadScript(codeStr);
-            Run(Runner);
+            runner.LoadScript(codeStr);
+            Run(runner);
+
+            return runner;
         }
 
         /// <summary>
@@ -82,17 +87,16 @@ namespace CSharpScript
         /// <returns>subClass of MonoBehaviour</returns>
         public int Run(CScript runner)
         {
-            Runner = runner;
-
             if (runner == null)
                 return 0;
+
             monoInstList.Clear();
 
-            var types = Runner.GetTypes().Where(t => t.IsSubclassOf(typeof(MonoBehaviour)));
+            var types = runner.GetTypes().Where(t => t.IsSubclassOf(typeof(MonoBehaviour)));
 
             foreach (var type in types)
             {
-                var monoInst = Runner.Override(type.FullName, gameObject);
+                var monoInst = runner.Override(type.FullName, gameObject);
                 monoInstList.Add(monoInst);
             }
             return monoInstList.Count;
@@ -103,22 +107,14 @@ namespace CSharpScript
         /// </summary>
         /// <param name="go"></param>
         /// <param name="runner"></param>
-        public static void Run(GameObject go, CScript runner)
+        public static int Run(GameObject go, CScript runner)
         {
-            go.AddComponent<CScriptComponent>().Run(runner);
+            return go.AddComponent<CScriptComponent>().Run(runner);
         }
 
-        public static void Run(GameObject go, string codeStr)
+        public static CScript Run(GameObject go, string codeStr)
         {
-            go.AddComponent<CScriptComponent>().Run(codeStr);
-        }
-
-        /// <summary>
-        /// Runner call script 's Main
-        /// </summary>
-        public static void RunMain()
-        {
-            Runner.RunMain();
+            return go.AddComponent<CScriptComponent>().Run(codeStr);
         }
 
         public void InvokeMonoMethod(string methodName)

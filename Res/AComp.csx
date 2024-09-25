@@ -6,17 +6,17 @@ public class AComp : MonoBehaviour
 {
     public void OnGUI()
     {
-        GUILayout.Button("onGUI .............",null);
+        GUILayout.Button("AComp onGUI .............", null);
     }
 
     public void Update()
     {
-        Debug.Log("update ..");
+        Debug.Log("AComp update ..");
     }
 
     //
     void Main()
     {
-        Debug.Log("Main test done");
+        Debug.Log("AComp Main test done");
     }
 }

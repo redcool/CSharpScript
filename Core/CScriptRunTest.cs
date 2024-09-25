@@ -17,9 +17,7 @@ namespace CSharpScript
             if (string.IsNullOrEmpty(codeStr))
                 return;
 
-            CScriptComponent.Run(gameObject, codeStr);
-
-            CScriptComponent.RunMain();
+            CScriptComponent.Run(gameObject, codeStr).RunMain();
         }
 
         private void OnEnable()

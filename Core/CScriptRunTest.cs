@@ -6,9 +6,11 @@ namespace CSharpScript
     using System.IO;
     using UnityEngine;
 
-    //[ExecuteAlways]
+    [ExecuteAlways]
     public class CScriptRunTest : MonoBehaviour
     {
+        public bool isTest;
+
         [Multiline(20)]
         public string codeStr;
 
@@ -20,9 +22,14 @@ namespace CSharpScript
             CScriptComponent.Run(gameObject, codeStr).RunMain();
         }
 
-        private void OnEnable()
+        private void Update()
         {
-            Run();
+            if (isTest)
+            {
+                isTest = false;
+
+                Run();
+            }
         }
     }
 }

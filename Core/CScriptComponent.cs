@@ -10,6 +10,7 @@ namespace CSharpScript
 #if UNITY_EDITOR
     using UnityEditor;
     using Microsoft.CodeAnalysis.Scripting;
+    using UnityEditor.SceneManagement;
 #endif
 
 #if UNITY_EDITOR
@@ -59,7 +60,6 @@ namespace CSharpScript
         /// </summary>
         Dictionary<string, HybInstance> methodMonoInstDict = new Dictionary<string, HybInstance>();
 
-        CScript runner;
         /// <summary>
         /// create a new CScript(runner), and run code
         /// </summary>
@@ -67,16 +67,10 @@ namespace CSharpScript
         /// <returns></returns>
         public CScript Run(string codeStr)
         {
-            if(runner == null)
-                runner = CScript.CreateRunner();
-            else
-            {
-                runner.UpdateMethodsOnly(codeStr);
-            }
+            var runner = CScript.CreateRunner();
 
             runner.LoadScript(codeStr);
             Run(runner);
-
             return runner;
         }
 
@@ -102,6 +96,14 @@ namespace CSharpScript
             return monoInstList.Count;
         }
 
+        public static T GetAddComponent<T>(GameObject go)where T : Component
+        {
+            var c = go.GetComponent<T>();
+            if (!c)
+                c = go.AddComponent<T>();
+            return c;
+        }
+
         /// <summary>
         /// direct run on go
         /// </summary>
@@ -109,12 +111,12 @@ namespace CSharpScript
         /// <param name="runner"></param>
         public static int Run(GameObject go, CScript runner)
         {
-            return go.AddComponent<CScriptComponent>().Run(runner);
+            return GetAddComponent<CScriptComponent>(go).Run(runner);
         }
 
         public static CScript Run(GameObject go, string codeStr)
         {
-            return go.AddComponent<CScriptComponent>().Run(codeStr);
+            return GetAddComponent<CScriptComponent>(go).Run(codeStr);
         }
 
         public void InvokeMonoMethod(string methodName)
